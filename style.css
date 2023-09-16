@@ -1,0 +1,91 @@
+body, html{
+    height: 100%;
+}
+
+body{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: #121212;
+    --s: 20px; /* size  */
+    --m: 1px; /* margin */
+    --f: calc(1.732 * var(--s) + 4 * var(--m) - 1px);
+    flex-direction: column;
+}
+
+h1{
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#sizeConstraint{
+    width: 390px;
+}
+
+#drawingWrapper {
+    display: flex;
+    
+}
+
+#drawingArea {
+    font-size: 0; /*disable white space between inline block element */
+}
+
+.hex {
+    width: var(--s);
+    margin: var(--m);
+    height: calc(var(--s) * 1.1547);
+    display: inline-block;
+    font-size: initial;
+    clip-path: polygon(0% 25%, 0% 75%, 50% 100%, 100% 75%, 100% 25%, 50% 0%);
+    margin-bottom: calc(var(--m) - var(--s) * 0.2885);
+    transition: 0.1s;
+}
+
+#drawingArea::before {
+    content: "";
+    width: calc(var(--s) / 2 + var(--m));
+    float: left;
+    height: 120%;
+    shape-outside: repeating-linear-gradient(
+        #0000 0 calc(var(--f) - 3px),
+        #000 0 var(--f)
+    );
+}
+
+.controls{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    justify-self: end;
+}
+
+button{
+    margin-top: calc(var(--s) / 2);
+    padding: 20px;
+    background-color: darkgray;
+    border: gray 2px solid;
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+    text-transform:uppercase;
+}
+
+button:hover{
+    background-color: gray;
+}
+
+.leftSet{
+    display: flex;
+    align-items: center;
+}
+
+input, output{
+    color: white;
+    margin-top: calc(var(--s)/2);
+}
+
+output{
+    padding: 20px;
+    font-size: 24px;
+    font-family: Arial, Helvetica, sans-serif;
+}
