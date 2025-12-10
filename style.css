@@ -8,6 +8,8 @@
     --accent-secondary: #D2DCB6;
     --accent-dark: #778873;
     --border-color: #D2DCB6;
+    scroll-behavior: smooth;
+}
     --shadow-color: rgba(119, 136, 115, 0.15);
     --shadow-hover: rgba(119, 136, 115, 0.25);
 }
