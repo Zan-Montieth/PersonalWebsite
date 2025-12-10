@@ -290,6 +290,16 @@ nav a:hover {
     background: var(--accent-secondary);
 }
 
+.about-card a {
+    color: var(--accent-primary);
+    text-decoration: underline;
+    transition: color 0.3s ease;
+}
+
+.about-card a:hover {
+    color: var(--accent-dark);
+}
+
 footer {
     background: var(--accent-dark);
     color: var(--bg-primary);
