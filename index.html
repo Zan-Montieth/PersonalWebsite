@@ -61,43 +61,48 @@
 
         <section id="projects" class="section">
             <h2>Featured Projects</h2>
-            <div class="projects-grid">
-                <div class="project-card">
-                    <div class="project-image">🎨</div>
-                    <div class="project-content">
-                        <h3>Interactive Drawing Project</h3>
-                        <p>A JavaScript-based drawing application demonstrating HTML5 canvas manipulation, event handling, and creative coding principles.</p>
-                        <a href="projects/drawing-project/index.html" class="project-link">View Project</a>
+            <div class="carousel-container">
+                <button class="carousel-btn carousel-btn-prev" aria-label="Previous projects">‹</button>
+                <div class="projects-carousel">
+                    <div class="project-card">
+                        <div class="project-image">🎨</div>
+                        <div class="project-content">
+                            <h3>Interactive Drawing Project</h3>
+                            <p>A JavaScript-based drawing application demonstrating HTML5 canvas manipulation, event handling, and creative coding principles.</p>
+                            <a href="projects/drawing-project/index.html" class="project-link">View Project</a>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="project-card">
-                    <div class="project-image">📊</div>
-                    <div class="project-content">
-                        <h3>ZanMath</h3>
-                        <p>An educational tool,designed to synthesize instructional components in one place.</p>
-                        <a href="#" class="project-link">Coming Soon</a>
+                    
+                    <div class="project-card">
+                        <div class="project-image">📊</div>
+                        <div class="project-content">
+                            <h3>ZanMath</h3>
+                            <p>An educational tool,designed to synthesize instructional components in one place.</p>
+                            <a href="#" class="project-link">Coming Soon</a>
+                        </div>
                     </div>
-                </div>
 
-                <div class="project-card">
-                    <div class="project-image">🎮</div>
-                    <div class="project-content">
-                        <h3>Game Development</h3>
-                        <p>Check back in January for updates on my game development progress.</p>
-                        <a href="#" class="project-link">Coming Soon</a>
+                    <div class="project-card">
+                        <div class="project-image">🎮</div>
+                        <div class="project-content">
+                            <h3>Game Development</h3>
+                            <p>Check back in January for updates on my game development progress.</p>
+                            <a href="#" class="project-link">Coming Soon</a>
+                        </div>
                     </div>
-                </div>
 
-                <div class="project-card">
-                    <div class="project-image">🛵</div>
-                    <div class="project-content">
-                        <h3>qt50 Battery Box</h3>
-                        <p>A 3d model of the battery cover for a Honda qt50 moped. A common wear component that frequently sees wear and damage.</p>
-                        <a href="https://cults3d.com/:1398882" class="project-link">Check It Out On Cults3d</a>
+                    <div class="project-card">
+                        <div class="project-image">🛵</div>
+                        <div class="project-content">
+                            <h3>qt50 Battery Box</h3>
+                            <p>A 3d model of the battery cover for a Honda qt50 moped. A common wear component that frequently sees wear and damage.</p>
+                            <a href="https://cults3d.com/:1398882" class="project-link">Check It Out On Cults3d</a>
+                        </div>
                     </div>
                 </div>
+                <button class="carousel-btn carousel-btn-next" aria-label="Next projects">›</button>
             </div>
+            <div class="carousel-dots"></div>
         </section>
 
         <section id="contact" class="section">
@@ -133,6 +138,58 @@
         function updateToggleIcon(theme) {
             themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
         }
+
+        // Carousel functionality
+        const carousel = document.querySelector('.projects-carousel');
+        const cards = document.querySelectorAll('.project-card');
+        const prevBtn = document.querySelector('.carousel-btn-prev');
+        const nextBtn = document.querySelector('.carousel-btn-next');
+        const dotsContainer = document.querySelector('.carousel-dots');
+        
+        let currentIndex = 0;
+        const cardsPerView = 3;
+        const maxIndex = Math.max(0, cards.length - cardsPerView);
+
+        // Create dots (one for each possible position)
+        const totalDots = maxIndex + 1;
+        for (let i = 0; i < totalDots; i++) {
+            const dot = document.createElement('span');
+            dot.classList.add('carousel-dot');
+            if (i === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => goToSlide(i));
+            dotsContainer.appendChild(dot);
+        }
+
+        function updateCarousel() {
+            // Calculate percentage based on card width + gap
+            const cardWidth = cards[0].offsetWidth;
+            const gap = 32; // 2rem gap
+            const slideDistance = cardWidth + gap;
+            const offset = currentIndex * slideDistance;
+            
+            carousel.style.transform = `translateX(-${offset}px)`;
+            
+            // Update dots
+            document.querySelectorAll('.carousel-dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+
+            // Update button states
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = currentIndex >= maxIndex;
+        }
+
+        function goToSlide(index) {
+            currentIndex = Math.max(0, Math.min(index, maxIndex));
+            updateCarousel();
+        }
+
+        prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
+        nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
+
+        // Initialize and handle window resize
+        updateCarousel();
+        window.addEventListener('resize', updateCarousel);
     </script>
 </body>
 </html>
