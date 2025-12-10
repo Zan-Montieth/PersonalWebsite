@@ -162,8 +162,9 @@
 
         function updateCarousel() {
             // Calculate percentage based on card width + gap
+            const isMobile = window.innerWidth <= 768;
             const cardWidth = cards[0].offsetWidth;
-            const gap = 32; // 2rem gap
+            const gap = isMobile ? 0 : 32; // No gap on mobile, 2rem on desktop
             const slideDistance = cardWidth + gap;
             const offset = currentIndex * slideDistance;
             
@@ -186,6 +187,34 @@
 
         prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
         nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
+
+        // Touch swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        carousel.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        carousel.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    // Swipe left - next
+                    goToSlide(currentIndex + 1);
+                } else {
+                    // Swipe right - previous
+                    goToSlide(currentIndex - 1);
+                }
+            }
+        }
 
         // Initialize and handle window resize
         updateCarousel();
