@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hall Pass Tracker</title>
+    <style>
+    /* ─── DESIGN TOKENS ─── */
+    :root {
+        --bg-primary:   #F1F3E0;
+        --bg-secondary: #fff;
+        --bg-card:      #fff;
+        --text-primary:   #3a4a3a;
+        --text-secondary: #5a6a5a;
+        --accent-primary:   #A1BC98;
+        --accent-secondary: #D2DCB6;
+        --accent-dark:  #778873;
+        --border-color: #D2DCB6;
+        --shadow:       rgba(119,136,115,0.15);
+        --shadow-hover: rgba(119,136,115,0.25);
+        --header-bg:    #A1BC98;
+
+        /* Status colours — always high-contrast for projector */
+        --green-bg:     #1a7c3a;
+        --green-border: #145e2c;
+        --yellow-bg:    #c87d0a;
+        --yellow-border:#a06208;
+        --red-bg:       #c0392b;
+        --red-border:   #922b21;
+    }
+
+    [data-theme="dark"] {
+        --bg-primary:   #2a3329;
+        --bg-secondary: #3a4539;
+        --bg-card:      #3a4539;
+        --text-primary:   #F1F3E0;
+        --text-secondary: #D2DCB6;
+        --accent-primary:   #A1BC98;
+        --accent-secondary: #778873;
+        --accent-dark:  #D2DCB6;
+        --border-color: #4a5549;
+        --shadow:       rgba(0,0,0,0.3);
+        --shadow-hover: rgba(0,0,0,0.4);
+        --header-bg:    #4a5a49;
+
+        --green-bg:     #1e8a42;
+        --green-border: #155d2d;
+        --yellow-bg:    #d4880a;
+        --yellow-border:#a96a08;
+        --red-bg:       #cb4335;
+        --red-border:   #a0342a;
+    }
+
+    /* ─── RESET ─── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ─── BASE ─── */
+    body {
+        font-family: 'Georgia', 'Palatino', serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+        transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+        background: var(--header-bg);
+        color: #fff;
+        padding: 0.85rem 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 10px var(--shadow);
+        transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    [data-theme="dark"] header { box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+
+    .header-inner {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .back-btn {
+        color: rgba(255,255,255,0.9);
+        text-decoration: none;
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.88rem;
+        padding: 0.35rem 0.75rem;
+        border: 1px solid rgba(255,255,255,0.4);
+        border-radius: 6px;
+        transition: background 0.2s;
+        white-space: nowrap;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.15); }
+
+    header h1 {
+        font-size: 1.45rem;
+        font-weight: normal;
+        letter-spacing: 0.5px;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .clock-block { text-align: right; }
+
+    .clock-display {
+        font-family: 'Segoe UI', monospace;
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        line-height: 1;
+    }
+
+    .period-display {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.82rem;
+        color: rgba(255,255,255,0.88);
+        margin-top: 0.15rem;
+    }
+
+    .theme-toggle {
+        background: rgba(255,255,255,0.15);
+        border: none;
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.3s, transform 0.2s;
+        flex-shrink: 0;
+    }
+    .theme-toggle:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+
+    /* ─── MAIN ─── */
+    .main {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem 2rem;
+    }
+
+    /* ─── STATUS BANNER ─── */
+    .status-banner {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 0.9rem 2rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        gap: 1rem;
+        box-shadow: 0 2px 8px var(--shadow);
+        transition: background 0.3s, border-color 0.3s;
+    }
+
+    .stat { text-align: center; }
+
+    .stat-label {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.9px;
+        color: var(--text-secondary);
+    }
+
+    .stat-value {
+        font-size: 2.1rem;
+        font-weight: bold;
+        line-height: 1.1;
+        color: var(--accent-dark);
+        transition: color 0.3s;
+    }
+
+    .stat-value.alert { color: var(--red-bg); }
+
+    .stat-divider {
+        width: 1px;
+        height: 38px;
+        background: var(--border-color);
+        flex-shrink: 0;
+    }
+
+    /* ─── ADD FORMS ─── */
+    .add-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .add-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.2rem 1.4rem;
+        box-shadow: 0 2px 8px var(--shadow);
+        transition: background 0.3s, border-color 0.3s;
+    }
+
+    .add-card h2 {
+        font-size: 0.98rem;
+        font-weight: normal;
+        color: var(--accent-dark);
+        margin-bottom: 0.85rem;
+        border-bottom: 2px solid var(--accent-primary);
+        padding-bottom: 0.35rem;
+        display: inline-block;
+        transition: color 0.3s, border-color 0.3s;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 0.6rem;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.22rem;
+        flex: 1;
+        min-width: 100px;
+    }
+
+    label {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+    }
+
+    input[type="text"] {
+        padding: 0.52rem 0.82rem;
+        border: 1.5px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.95rem;
+        transition: border-color 0.2s, background 0.3s, color 0.3s;
+        outline: none;
+    }
+    input[type="text"]:focus { border-color: var(--accent-primary); }
+
+    .btn {
+        padding: 0.52rem 1.15rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: background 0.2s, transform 0.1s;
+        white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent-primary); color: #fff; }
+    .btn-primary:hover { background: var(--accent-dark); }
+
+    /* ─── SECTION HEADERS ─── */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .section-title {
+        font-size: 1.15rem;
+        font-weight: normal;
+        color: var(--accent-dark);
+        transition: color 0.3s;
+    }
+
+    .badge {
+        background: var(--accent-primary);
+        color: #fff;
+        font-size: 0.76rem;
+        padding: 0.17rem 0.55rem;
+        border-radius: 10px;
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 700;
+    }
+
+    /* ─── CARD GRIDS ─── */
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .empty-state {
+        color: var(--text-secondary);
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.88rem;
+        font-style: italic;
+        padding: 0.5rem 0;
+    }
+
+    /* ─── STATUS CARDS ─── */
+    .pass-card, .charger-card {
+        border-radius: 14px;
+        padding: 1.1rem 1.2rem;
+        color: #fff;
+        border: 2.5px solid transparent;
+        position: relative;
+        animation: cardIn 0.3s ease;
+    }
+
+    /* Green — calm */
+    .pass-card.green, .charger-card.green {
+        background: var(--green-bg);
+        border-color: var(--green-border);
+        box-shadow: 0 3px 10px rgba(26,124,58,0.35);
+    }
+
+    /* Yellow — attention */
+    .pass-card.yellow, .charger-card.yellow {
+        background: var(--yellow-bg);
+        border-color: var(--yellow-border);
+        box-shadow: 0 3px 12px rgba(200,125,10,0.4);
+        animation: cardIn 0.3s ease, pulseYellow 2.4s ease-in-out infinite;
+    }
+
+    /* Red — urgent */
+    .pass-card.red, .charger-card.red {
+        background: var(--red-bg);
+        border-color: var(--red-border);
+        box-shadow: 0 3px 14px rgba(192,57,43,0.45);
+        animation: cardIn 0.3s ease, pulseRed 1.4s ease-in-out infinite;
+    }
+
+    .card-name {
+        font-size: 1.15rem;
+        font-weight: bold;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 0.18rem;
+    }
+
+    .card-sub {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.83rem;
+        opacity: 0.88;
+        margin-bottom: 0.65rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .pass-timer {
+        font-family: 'Segoe UI', monospace;
+        font-size: 2.6rem;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-align: center;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.22);
+        line-height: 1;
+        padding-bottom: 0.6rem;
+    }
+
+    .charger-period {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.88rem;
+        text-align: center;
+        opacity: 0.93;
+        padding-bottom: 0.6rem;
+        min-height: 2.5em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .card-footer {
+        display: flex;
+        justify-content: center;
+    }
+
+    .btn-returned {
+        background: rgba(255,255,255,0.2);
+        color: #fff;
+        border: 1.5px solid rgba(255,255,255,0.5);
+        padding: 0.32rem 1.05rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+    .btn-returned:hover { background: rgba(255,255,255,0.38); }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+        border: none;
+        border-top: 1.5px solid var(--border-color);
+        margin: 0.5rem 0 2rem;
+    }
+
+    /* ─── SCHEDULE EDITOR ─── */
+    .schedule-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 3rem;
+        box-shadow: 0 2px 8px var(--shadow);
+        transition: background 0.3s, border-color 0.3s;
+    }
+
+    .sched-toggle-btn {
+        width: 100%;
+        background: none;
+        border: none;
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--text-primary);
+        font-family: 'Georgia', serif;
+        font-size: 0.98rem;
+        transition: background 0.2s;
+        text-align: left;
+    }
+    .sched-toggle-btn:hover { background: var(--bg-primary); }
+
+    .chevron {
+        color: var(--accent-dark);
+        font-size: 0.9rem;
+        transition: transform 0.3s;
+        flex-shrink: 0;
+    }
+    .chevron.open { transform: rotate(180deg); }
+
+    .sched-body {
+        border-top: 1px solid var(--border-color);
+        padding: 1.5rem;
+        display: none;
+    }
+    .sched-body.open { display: block; }
+
+    .sched-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .sched-col h3 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--accent-dark);
+        margin-bottom: 0.8rem;
+        font-family: 'Segoe UI', sans-serif;
+        transition: color 0.3s;
+    }
+
+    .sched-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+    }
+
+    .sched-row label {
+        min-width: 62px;
+        font-size: 0.86rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    input[type="time"] {
+        padding: 0.38rem 0.62rem;
+        border: 1.5px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.9rem;
+        transition: border-color 0.2s, background 0.3s, color 0.3s;
+        outline: none;
+    }
+    input[type="time"]:focus { border-color: var(--accent-primary); }
+
+    .save-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .saved-msg {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 0.86rem;
+        color: var(--accent-dark);
+        display: none;
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes cardIn {
+        from { opacity: 0; transform: scale(0.88) translateY(8px); }
+        to   { opacity: 1; transform: scale(1)    translateY(0);   }
+    }
+
+    @keyframes pulseYellow {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.80; }
+    }
+
+    @keyframes pulseRed {
+        0%, 100% { transform: scale(1);     box-shadow: 0 3px 14px rgba(192,57,43,0.45), 0 0 0 0   rgba(192,57,43,0.5); }
+        50%       { transform: scale(1.025); box-shadow: 0 3px 18px rgba(192,57,43,0.6),  0 0 0 10px rgba(192,57,43,0); }
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+        .add-section  { grid-template-columns: 1fr; }
+        .sched-grid   { grid-template-columns: 1fr; }
+        .header-inner { flex-wrap: wrap; }
+        .clock-display { font-size: 1.5rem; }
+        header h1 { font-size: 1.1rem; }
+        .main { padding: 1rem; }
+        .cards-grid { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); }
+        .status-banner { padding: 0.75rem 1rem; flex-wrap: wrap; }
+    }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-inner">
+        <div class="header-left">
+            <a href="../../index.html" class="back-btn">← Back</a>
+            <h1>📋 Hall Pass Tracker</h1>
+        </div>
+        <div class="header-right">
+            <div class="clock-block">
+                <div class="clock-display" id="clockDisplay">--:--:--</div>
+                <div class="period-display" id="periodDisplay">Loading…</div>
+            </div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+        </div>
+    </div>
+</header>
+
+<main class="main">
+
+    <!-- Status Banner -->
+    <div class="status-banner">
+        <div class="stat">
+            <div class="stat-label">Students Out</div>
+            <div class="stat-value" id="statOut">0</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+            <div class="stat-label">Overdue (&gt;7 min)</div>
+            <div class="stat-value" id="statOverdue">0</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+            <div class="stat-label">Chargers Out</div>
+            <div class="stat-value" id="statChargers">0</div>
+        </div>
+    </div>
+
+    <!-- Add Forms -->
+    <div class="add-section">
+        <div class="add-card">
+            <h2>🚶 Send Student Out</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="passName">Student Name</label>
+                    <input type="text" id="passName" placeholder="Name…" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="passDest">Destination</label>
+                    <input type="text" id="passDest" placeholder="Bathroom, Office…" autocomplete="off">
+                </div>
+                <button class="btn btn-primary" id="addPassBtn">Send</button>
+            </div>
+        </div>
+        <div class="add-card">
+            <h2>🔌 Charger Loan</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="chargerName">Student Name</label>
+                    <input type="text" id="chargerName" placeholder="Name…" autocomplete="off">
+                </div>
+                <button class="btn btn-primary" id="addChargerBtn">Loan Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hall Passes -->
+    <div class="section-header">
+        <span class="section-title">🚶 Active Hall Passes</span>
+        <span class="badge" id="passBadge">0</span>
+    </div>
+    <div class="cards-grid" id="passesGrid">
+        <span class="empty-state" id="passesEmpty">No students currently out.</span>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Chargers -->
+    <div class="section-header">
+        <span class="section-title">🔌 Borrowed Chargers</span>
+        <span class="badge" id="chargerBadge">0</span>
+    </div>
+    <div class="cards-grid" id="chargersGrid">
+        <span class="empty-state" id="chargersEmpty">No chargers currently loaned out.</span>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Schedule Editor -->
+    <div class="schedule-section">
+        <button class="sched-toggle-btn" id="schedToggleBtn" aria-expanded="false">
+            <span>⚙️ Bell Schedule Settings</span>
+            <span class="chevron" id="chevron">▼</span>
+        </button>
+        <div class="sched-body" id="schedBody">
+            <div class="sched-grid">
+                <div class="sched-col">
+                    <h3>📅 Mon · Tue · Thu · Fri</h3>
+                    <div class="sched-row"><label>Period 1</label><input type="time" id="n1"></div>
+                    <div class="sched-row"><label>Period 2</label><input type="time" id="n2"></div>
+                    <div class="sched-row"><label>Period 3</label><input type="time" id="n3"></div>
+                    <div class="sched-row"><label>Period 4</label><input type="time" id="n4"></div>
+                </div>
+                <div class="sched-col">
+                    <h3>📅 Wednesday (Late Start)</h3>
+                    <div class="sched-row"><label>Period 1</label><input type="time" id="w1"></div>
+                    <div class="sched-row"><label>Period 2</label><input type="time" id="w2"></div>
+                    <div class="sched-row"><label>Period 3</label><input type="time" id="w3"></div>
+                    <div class="sched-row"><label>Period 4</label><input type="time" id="w4"></div>
+                </div>
+            </div>
+            <div class="save-row">
+                <button class="btn btn-primary" id="saveSchedBtn">Save Schedule</button>
+                <span class="saved-msg" id="savedMsg">✓ Schedule saved!</span>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════
+// SCHEDULE
+// ═══════════════════════════════════════════
+const DEFAULT_SCHED = {
+    normal: ['09:45', '12:00', '14:10', '15:35'],
+    wed:    ['10:50', '12:20', '14:15', '15:35']
+};
+
+function loadSched() {
+    try {
+        const s = localStorage.getItem('hpt_sched');
+        return s ? JSON.parse(s) : { normal: [...DEFAULT_SCHED.normal], wed: [...DEFAULT_SCHED.wed] };
+    } catch { return { normal: [...DEFAULT_SCHED.normal], wed: [...DEFAULT_SCHED.wed] }; }
+}
+
+let sched = loadSched();
+
+function saveSched() {
+    const nIds = ['n1','n2','n3','n4'];
+    const wIds = ['w1','w2','w3','w4'];
+    sched = {
+        normal: nIds.map((id, i) => document.getElementById(id).value || DEFAULT_SCHED.normal[i]),
+        wed:    wIds.map((id, i) => document.getElementById(id).value || DEFAULT_SCHED.wed[i])
+    };
+    localStorage.setItem('hpt_sched', JSON.stringify(sched));
+    const msg = document.getElementById('savedMsg');
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 2400);
+}
+
+function applySchedToInputs() {
+    ['n1','n2','n3','n4'].forEach((id, i) => { document.getElementById(id).value = sched.normal[i]; });
+    ['w1','w2','w3','w4'].forEach((id, i) => { document.getElementById(id).value = sched.wed[i]; });
+}
+
+function getActiveSched() {
+    return new Date().getDay() === 3 ? sched.wed : sched.normal;
+}
+
+function parseHHMM(str) {
+    const [h, m] = str.split(':').map(Number);
+    return h * 60 + m;
+}
+
+function getPeriodInfo() {
+    const now    = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const nowSec = now.getSeconds();
+    const active = getActiveSched();
+
+    for (let i = 0; i < active.length; i++) {
+        const endMin = parseHHMM(active[i]);
+        if (nowMin < endMin) {
+            const remSec = (endMin - nowMin) * 60 - nowSec;
+            return { inSession: true, period: i + 1, endStr: active[i], remSec: Math.max(0, remSec) };
+        }
+        // Exact boundary — period just ended this second
+        if (nowMin === endMin && nowSec === 0) {
+            return { inSession: true, period: i + 1, endStr: active[i], remSec: 0 };
+        }
+    }
+    // After all periods have ended
+    return { inSession: false, period: null, endStr: null, remSec: 0, afterAll: true };
+}
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let passes   = [];
+let chargers = [];
+
+function loadState() {
+    try { passes   = JSON.parse(localStorage.getItem('hpt_passes'))   || []; } catch { passes   = []; }
+    try { chargers = JSON.parse(localStorage.getItem('hpt_chargers')) || []; } catch { chargers = []; }
+}
+
+function saveState() {
+    localStorage.setItem('hpt_passes',   JSON.stringify(passes));
+    localStorage.setItem('hpt_chargers', JSON.stringify(chargers));
+}
+
+// ═══════════════════════════════════════════
+// ADD / REMOVE
+// ═══════════════════════════════════════════
+function addPass() {
+    const nameEl = document.getElementById('passName');
+    const destEl = document.getElementById('passDest');
+    const name   = nameEl.value.trim();
+    if (!name) { nameEl.focus(); return; }
+    passes.push({ id: Date.now(), name, dest: destEl.value.trim() || 'Hallway', start: Date.now() });
+    saveState();
+    nameEl.value = '';
+    destEl.value = '';
+    nameEl.focus();
+    fullRenderPasses();
+}
+
+function removePass(id) {
+    passes = passes.filter(p => p.id !== id);
+    saveState();
+    fullRenderPasses();
+}
+
+function addCharger() {
+    const el   = document.getElementById('chargerName');
+    const name = el.value.trim();
+    if (!name) { el.focus(); return; }
+    chargers.push({ id: Date.now(), name });
+    saveState();
+    el.value = '';
+    el.focus();
+    fullRenderChargers();
+}
+
+function removeCharger(id) {
+    chargers = chargers.filter(c => c.id !== id);
+    saveState();
+    fullRenderChargers();
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function elapsedSec(start) {
+    return Math.floor((Date.now() - start) / 1000);
+}
+
+function fmtMSS(sec) {
+    const s = Math.abs(sec);
+    return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+
+function passStatus(sec) {
+    if (sec < 300) return 'green';  // 0–5 min
+    if (sec < 420) return 'yellow'; // 5–7 min
+    return 'red';                   // 7+ min
+}
+
+function chargerStatus(pInfo) {
+    if (!pInfo.inSession) return pInfo.afterAll ? 'red' : 'green';
+    if (pInfo.remSec > 180) return 'green';  // > 3 min remaining
+    if (pInfo.remSec > 0)   return 'yellow'; // 0–3 min remaining
+    return 'red';                            // period ended
+}
+
+function chargerPeriodText(pInfo, st) {
+    if (st === 'red')    return '⚠️ Period ended — return charger!';
+    if (st === 'yellow') return `⚡ ${fmtMSS(pInfo.remSec)} until period ends`;
+    if (pInfo.inSession) return `Period ${pInfo.period} ends at ${pInfo.endStr}`;
+    return 'No period currently active';
+}
+
+function safeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// ═══════════════════════════════════════════
+// FULL RENDERS  — called when data changes
+// ═══════════════════════════════════════════
+function fullRenderPasses() {
+    const grid  = document.getElementById('passesGrid');
+    const empty = document.getElementById('passesEmpty');
+    const badge = document.getElementById('passBadge');
+
+    grid.querySelectorAll('.pass-card').forEach(c => c.remove());
+    badge.textContent    = passes.length;
+    empty.style.display  = passes.length ? 'none' : '';
+
+    passes.forEach(p => {
+        const sec  = elapsedSec(p.start);
+        const st   = passStatus(sec);
+        const card = document.createElement('div');
+        card.className    = `pass-card ${st}`;
+        card.dataset.id   = p.id;
+        card.innerHTML    = `
+            <div class="card-name">${safeHtml(p.name)}</div>
+            <div class="card-sub">📍 ${safeHtml(p.dest)}</div>
+            <div class="pass-timer" data-timer>${fmtMSS(sec)}</div>
+            <div class="card-footer">
+                <button class="btn-returned" data-remove-pass="${p.id}">✓ Returned</button>
+            </div>`;
+        grid.appendChild(card);
+    });
+
+    updateStats();
+}
+
+function fullRenderChargers() {
+    const grid  = document.getElementById('chargersGrid');
+    const empty = document.getElementById('chargersEmpty');
+    const badge = document.getElementById('chargerBadge');
+    const pInfo = getPeriodInfo();
+
+    grid.querySelectorAll('.charger-card').forEach(c => c.remove());
+    badge.textContent   = chargers.length;
+    empty.style.display = chargers.length ? 'none' : '';
+
+    chargers.forEach(c => {
+        const st   = chargerStatus(pInfo);
+        const card = document.createElement('div');
+        card.className  = `charger-card ${st}`;
+        card.dataset.id = c.id;
+        card.innerHTML  = `
+            <div class="card-name">${safeHtml(c.name)}</div>
+            <div class="card-sub">🔌 Chromebook Charger</div>
+            <div class="charger-period" data-period-info>${chargerPeriodText(pInfo, st)}</div>
+            <div class="card-footer">
+                <button class="btn-returned" data-remove-charger="${c.id}">✓ Returned</button>
+            </div>`;
+        grid.appendChild(card);
+    });
+
+    updateStats();
+}
+
+// ═══════════════════════════════════════════
+// TICK — lightweight in-place update every second
+// ═══════════════════════════════════════════
+function tick() {
+    const pInfo = getPeriodInfo();
+
+    // Update pass cards in place
+    document.querySelectorAll('.pass-card').forEach(card => {
+        const id   = parseInt(card.dataset.id);
+        const pass = passes.find(p => p.id === id);
+        if (!pass) return;
+
+        const sec  = elapsedSec(pass.start);
+        const st   = passStatus(sec);
+
+        card.querySelector('[data-timer]').textContent = fmtMSS(sec);
+
+        // Only update class (and re-trigger animation) on status change
+        if (!card.classList.contains(st)) {
+            card.className = `pass-card ${st}`;
+        }
+    });
+
+    // Update charger cards in place
+    document.querySelectorAll('.charger-card').forEach(card => {
+        const id      = parseInt(card.dataset.id);
+        const charger = chargers.find(c => c.id === id);
+        if (!charger) return;
+
+        const st = chargerStatus(pInfo);
+
+        card.querySelector('[data-period-info]').textContent = chargerPeriodText(pInfo, st);
+
+        if (!card.classList.contains(st)) {
+            card.className = `charger-card ${st}`;
+        }
+    });
+
+    updateStats();
+}
+
+function updateStats() {
+    let overdue = 0;
+    passes.forEach(p => { if (elapsedSec(p.start) >= 420) overdue++; });
+
+    document.getElementById('statOut').textContent      = passes.length;
+    document.getElementById('statChargers').textContent = chargers.length;
+    const odEl = document.getElementById('statOverdue');
+    odEl.textContent = overdue;
+    odEl.className   = 'stat-value' + (overdue > 0 ? ' alert' : '');
+}
+
+// ═══════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════
+function updateClock() {
+    const now = new Date();
+    const hh  = String(now.getHours()).padStart(2, '0');
+    const mm  = String(now.getMinutes()).padStart(2, '0');
+    const ss  = String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('clockDisplay').textContent = `${hh}:${mm}:${ss}`;
+
+    const pInfo = getPeriodInfo();
+    if (pInfo.inSession) {
+        document.getElementById('periodDisplay').textContent =
+            `Period ${pInfo.period}  ·  ${fmtMSS(pInfo.remSec)} remaining`;
+    } else {
+        document.getElementById('periodDisplay').textContent = 'No period in session';
+    }
+}
+
+// ═══════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════
+const html     = document.documentElement;
+const themeBtn = document.getElementById('themeToggle');
+
+function applyTheme(t) {
+    html.setAttribute('data-theme', t);
+    themeBtn.textContent = t === 'light' ? '☀️' : '🌙';
+    localStorage.setItem('hpt_theme', t);
+}
+
+applyTheme(localStorage.getItem('hpt_theme') || 'light');
+
+themeBtn.addEventListener('click', () => {
+    applyTheme(html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+});
+
+// ═══════════════════════════════════════════
+// SCHEDULE EDITOR TOGGLE
+// ═══════════════════════════════════════════
+document.getElementById('schedToggleBtn').addEventListener('click', () => {
+    const body    = document.getElementById('schedBody');
+    const chevron = document.getElementById('chevron');
+    const btn     = document.getElementById('schedToggleBtn');
+    const open    = body.classList.toggle('open');
+    chevron.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+});
+
+document.getElementById('saveSchedBtn').addEventListener('click', saveSched);
+
+// ═══════════════════════════════════════════
+// EVENT DELEGATION — return buttons
+// ═══════════════════════════════════════════
+document.getElementById('passesGrid').addEventListener('click', e => {
+    const btn = e.target.closest('[data-remove-pass]');
+    if (btn) removePass(parseInt(btn.dataset.removePass));
+});
+
+document.getElementById('chargersGrid').addEventListener('click', e => {
+    const btn = e.target.closest('[data-remove-charger]');
+    if (btn) removeCharger(parseInt(btn.dataset.removeCharger));
+});
+
+// ═══════════════════════════════════════════
+// ADD BUTTONS & ENTER KEY
+// ═══════════════════════════════════════════
+document.getElementById('addPassBtn').addEventListener('click', addPass);
+document.getElementById('addChargerBtn').addEventListener('click', addCharger);
+
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const id = document.activeElement && document.activeElement.id;
+    if (id === 'passName' || id === 'passDest') addPass();
+    else if (id === 'chargerName') addCharger();
+});
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+loadState();
+applySchedToInputs();
+fullRenderPasses();
+fullRenderChargers();
+updateClock();
+
+setInterval(updateClock, 1000);
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
